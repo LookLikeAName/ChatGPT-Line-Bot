@@ -25,3 +25,6 @@ class DALLE:
 
     def generate(self, text: str) -> str:
         return self.model.image_generation(text)
+
+    def variation(self, text: str) -> str:
+        return  self.model.image_variation(text)
