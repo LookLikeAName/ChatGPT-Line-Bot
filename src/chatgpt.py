@@ -28,3 +28,6 @@ class DALLE:
 
     def variation(self, text: str) -> str:
         return  self.model.image_variation(text)
+      
+    def edit(self, text: str, prompt: str) -> str:
+        return  self.model.image_edit(text, prompt)

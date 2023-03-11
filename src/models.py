@@ -38,3 +38,14 @@ class OpenAIModel(ModelInterface):
     response = openai.Image.create_variation(image=open(path, "rb"), n=1, size=self.image_size)
     image_url = response.data[0].url
     return image_url
+
+  def image_edit(self, path: str, prompt_a: str) -> str:
+    response = openai.Image.create_edit(
+      image=open(path, "rb"),
+      mask=open("./img/mask.png", "rb"),
+      n=1,
+      prompt = prompt_a,
+      size=self.image_size
+    )
+    image_url = response.data[0].url
+    return image_url

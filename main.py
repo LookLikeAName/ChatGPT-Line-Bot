@@ -118,9 +118,20 @@ def handle_text_message(event):
         msg = ImageSendMessage(original_content_url=response,
                                preview_image_url=response)
     elif text[2:].startswith(image_variate_key_word):
-      user_state[push_id].update(user_id, 0, 'state', memory_user_state.VARIATION)
-      msg = TextSendMessage(text="責任來我就扛，請傳圖片!")
-      print(push_id, user_id, user_state[push_id].get_data(user_id, 0, 'state'))
+      if text[4:] != "":
+        user_state[push_id].update(user_id, 0, 'state', memory_user_state.EDIT)
+        try:
+          response = image_chatgpt.get_response(user_id, text[4:].strip())
+          user_state[push_id].update(user_id, 0, 'prompt', response)
+          msg = TextSendMessage(text="責任來我就扛，請傳圖片!")
+        except:
+          user_state[push_id].update(user_id, 0, 'state', memory_user_state.NORMAL)
+          msg = TextSendMessage(text="鬆懈了...請稍候再試!")
+      else:
+        user_state[push_id].update(user_id, 0, 'state', memory_user_state.VARIATION)
+        msg = TextSendMessage(text="責任來我就扛，請傳圖片!")
+      print(push_id, user_id, user_state[push_id].get_data(user_id, 0, 'state'),   
+            user_state[push_id].get_data(user_id, 0, 'prompt'))
     else:
       #logger.info(f'{user_id}: {text}')
       response = chatgpt.get_response(user_id, text)
@@ -176,12 +187,16 @@ def handle_image_message(event):
     line_bot_api.push_message(push_id, TextSendMessage(text="我來救! 請稍等..."))
   except LineBotApiError as e:
     print(e)
-  response = dalle.variation(path)
+  if user_state[push_id].get_data(user_id, 0, 'state') == memory_user_state.VARIATION:
+    response = dalle.variation(path)
+  elif user_state[push_id].get_data(user_id, 0, 'state') == memory_user_state.EDIT:
+    response = dalle.edit(path, user_state[push_id].get_data(user_id, 0, 'prompt'))
   msg = ImageSendMessage(original_content_url=response,
                          preview_image_url=response)
   line_bot_api.reply_message(event.reply_token, msg)
   os.remove(path)
   user_state[push_id].update(user_id, 0, 'state', memory_user_state.NORMAL)
+  user_state[push_id].update(user_id, 0, 'prompt', '')
 
 @app.route("/", methods=['GET'])
 def home():
